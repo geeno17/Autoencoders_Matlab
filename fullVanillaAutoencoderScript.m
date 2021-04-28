@@ -1,30 +1,74 @@
 % VANILLA AUTOENCODER
 
+clear;clc;close all
 % DATASET SETTINGS
 
-pathDataset = 'MerchData'; % path of the folder containing the images to be learnt, subdivided into folders per class
-fileExtensions = {'.jpg'}; % image extensions to be accepted
+pathDataset = 'MerchData'; % path of the folder containing the images to be learnt, subdivided into folders per class. If empty you will use MNIST
+fileExtensions = {'.png'}; % image extensions to be accepted
 trainingPercentage = 0.75; % data percentage for training set
+balanceDataset = true; %true/false if your dataset is unbalanced you can balance it.
 
+%DATA AUGMENTATION SETTINGS 
+dataAugmentation = false; % true/false if you need to perform data augmentation or data transformation (rgb2gray, resize etc). If false, you can ignore next settings (DATA AUGMENTATION SETTINGS)
+imageSize = [50 50]; % images output size
+nDataset = 3; % how many times you want to replicate the dataset
+outputSizeMode = 'resize'; %'resize', 'centercrop' or 'randcrop'
+colorPreprocessing = 'rgb2gray'; % 'gray2rgb' or 'rgb2gray'
+
+RandXReflection = false;
+RandYReflection = false;
+RandRotation = [-15 15]; % default [0 0]
+RandScale = [0.8 1.2]; % default [1 1]
+RandXShear = [0 0]; % default [0 0]
+RandYShear = [0 0]; % default [0 0]
+RandXTranslation = [0 0]; % default [0 0]
+RandYTranslation = [0 0];  % default [0 0]
+
+% AUTOENCODER SETTINGS
+layersSize = [100, 50]; % each element of layersSize refers to the size of the ith autoencoder layer
+l2WeightRegularization = [0.004, 0.002]; % default 0.001, accepts positive values
+sparsityRegularization = [4, 4]; % default 1, accepts positive values
+sparsityProportion = [0.15, 0.1]; % default 0.05, accepts values between 0 and 1
+maxEpochs = [400, 100, 25]; % max number of epochs to train every layer (the last value refers to Softmax layer)
+scaleData = [false, false]; % default true, accepts boolean
+%encoderTransferFunction = ['logsig','logsig']; % 'logsig' o 'satlin'
+%decoderTransferFunction = ['logsig','logsig']; % 'logsig', 'satlin' o 'purelin'
+%lossFunction = ['mseparse', 'mseparse', 'mseparse'];
+%trainingAlgorithm = ['trainscg', 'trainscg', trainscg'];
+
+rng('default') % for reproducibility
+
+%%CREATE DATASTORE
+if (isempty(pathDataset) || ~isfolder(pathDataset)) % use MNIST as default
+    disp("Dataset path doesn't exist. You will use MNIST!")
+    pathDataset = fullfile(matlabroot,'toolbox','nnet','nndemos',...
+    'nndatasets','DigitDataset');
+end
 datastore = imageDatastore(pathDataset, 'FileExtensions', fileExtensions, 'IncludeSubfolders', true, 'LabelSource', 'foldernames');
-[trainDatastore, testDatastore] = splitEachLabel(datastore,trainingPercentage);
+[trainDatastore, testDatastore] = splitEachLabel(datastore, trainingPercentage);
 
-dataAugmentation = true; % true/false if you need to perform data augmentation or data transformation (rgb2gray, resize etc)
-if dataAugmentation
-    nDataset = 3; % how many times you want to replicate the dataset
-    imageSize = [50 50]; % images output size
-    outputSizeMode = 'resize'; %'resize', 'centercrop' or 'randcrop'
-    colorPreprocessing = 'rgb2gray'; % 'gray2rgb' or 'rgb2gray'
+
+%histogram(trainDatastore.Labels); title('Training set label frequency');
+%histogram(testDatastore.Labels); title('Test set label frequency');
+if balanceDataset
+    trainDatastore = balanceDatastore(trainDatastore);
+    testDatastore = balanceDatastore(testDatastore);
     
+    %histogram(trainDatastore.Labels); title('Training set label frequency after data balancing');
+    %histogram(testDatastore.Labels); title('Test set label frequency after data balancing');
+end
+
+
+if dataAugmentation
     imageAugmenter = imageDataAugmenter(... % it allows to handle the image augmenter settings 
-        'RandXReflection', false, ...
-        'RandYReflection', false, ...
-        'RandRotation', [-15 15], ... % default [0 0]
-        'RandScale', [0.8 1.2], ... % default [1 1]
-        'RandXShear', [0 0], ... % default [0 0]
-        'RandYShear', [0 0], ... % default [0 0]
-        'RandXTranslation', [0 0], ... % default [0 0]
-        'RandYTranslation', [0 0] ... % default [0 0]
+        'RandXReflection', RandXReflection, ...
+        'RandYReflection', RandYReflection, ...
+        'RandRotation', RandRotation, ... % default [0 0]
+        'RandScale', RandScale, ... % default [1 1]
+        'RandXShear', RandXShear, ... % default [0 0]
+        'RandYShear', RandYShear, ... % default [0 0]
+        'RandXTranslation', RandXTranslation, ... % default [0 0]
+        'RandYTranslation', RandYTranslation ... % default [0 0]
         );
 
     augmentedTrainDatastore = augmentedImageDatastore(imageSize, trainDatastore, 'DataAugmentation', imageAugmenter, ... 
@@ -54,6 +98,8 @@ else
     testLabels = dummyvar(testDatastore.Labels)'
 end
 
+
+
 %{
 % display some of the training images
 clf
@@ -62,19 +108,6 @@ for i = 1:20
     imshow(trainImages{i});
 end
 %}
-
-% AUTOENCODER SETTINGS
-
-layersSize = [100, 50]; % each element of layersSize refers to the size of the ith autoencoder layer
-l2WeightRegularization = [0.004, 0.002]; % default 0.001, accepts positive values
-sparsityRegularization = [4, 4]; % default 1, accepts positive values
-sparsityProportion = [0.15, 0.1]; % default 0.05, accepts values between 0 and 1
-maxEpochs = [400, 100];
-scaleData = [false, false]; % default true, accepts boolean
-%encoderTransferFunction = ['logsig','logsig']; % 'logsig' o 'satlin'
-%decoderTransferFunction = ['logsig','logsig']; % 'logsig', 'satlin' o 'purelin'
-%lossFunction = ['mseparse', 'mseparse', 'mseparse'];
-%trainingAlgorithm = ['trainscg', 'trainscg', trainscg'];
 
 % TRAINING
 
@@ -91,16 +124,10 @@ for i = 1 : numel(layersSize)
     layerInput = encode(layers{i}, layerInput);
 end
 layers{end} = trainSoftmaxLayer(layerInput,trainLabels, ...
-    'MaxEpochs', 25 ... % epochs to train the last soft max layer
+    'MaxEpochs', maxEpochs{end} ... % epochs to train the last soft max layer
     );
 
 network = stack(layers{:});
-
-% display the weights of the ith autoencoder layer
-%plotWeights(layers{i});
-
-% display the full network
-%view(network);
 
 % FINE TUNING
 
@@ -113,10 +140,35 @@ end
 
 network = train(network, xTrain, trainLabels);
 
+% display the weights of the ith autoencoder layer
+%plotWeights(layers{i});
+
+% display the full network
+%view(network);
+
 xTest = zeros(prod(imageSize), numel(testImages));
 for i = 1 : numel(testImages)
     xTest(:,i) = testImages{i}(:);
 end
 
 y = network(xTest);
-plotconfusion(testLabels,y);
+plotconfusion(testLabels, y);
+
+% Functions to balance the Dataset. It uses oversampling.
+function datastore = balanceDatastore(datastore)
+labelCount = countEachLabel(datastore);   
+maxNumObservations = max(labelCount{:, 2});
+[G,classes] = findgroups(datastore.Labels);
+filesAndLabels = splitapply(@(x,y){randReplicateData(x,y,maxNumObservations)},datastore.Files, datastore.Labels,G); 
+filesAndLabels = vertcat(filesAndLabels{:,1});
+%files = filesAndLabels(:,1);
+%labels = classes(filesAndLabels(:,2));
+datastore.Files = cellstr(filesAndLabels(:,1));
+datastore.Labels = classes(filesAndLabels(:,2));
+end
+
+function t = randReplicateData(files, labels, numDesired)
+n = numel(files);
+ind = randi(n,numDesired,1);
+t = [files(ind),labels(ind)];
+end
