@@ -3,11 +3,11 @@ clear;clc;close all
 
 % DATASET SETTINGS
 pathDataset = 'MerchData'; % path of the folder containing the images to be learnt, subdivided into folders per class
-fileExtensions = {'.jpg'}; % image extensions to be accepted
+fileExtensions = {'.png'}; % image extensions to be accepted
 trainingPercentage = 0.75; % data percentage for training set
 balanceDataset = true; % true/false if your dataset is unbalanced you can balance it
-trainDesiredNumObservation = "max" % max, min, mean, median, or you can specify a number. It is the number of samples per class that you want in the balanced dataSet
-validationDesiredNumObservation = "max"
+trainDesiredNumObservation = "max"; % max, min, mean, median, or you can specify a number. It is the number of samples per class that you want in the balanced dataSet
+validationDesiredNumObservation = "max";
 
 % DATA AUGMENTATION/TRANSFORMATION SETTINGS
 dataAugmentation = true; % true/false if you need to perform data augmentation or data transformation (rgb2gray, resize etc). If false, you can ignore next settings (DATA AUGMENTATION SETTINGS)

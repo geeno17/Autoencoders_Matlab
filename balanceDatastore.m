@@ -1,6 +1,7 @@
 % Functions to balance the Dataset. It uses oversampling.
 function datastore = balanceDatastore(datastore, desiredNumObservation)
-if isa(desiredNumObservation, 'string')
+labelCount = countEachLabel(datastore); 
+if (isa(desiredNumObservation, 'string'))
     switch desiredNumObservation
         case "max"
             desiredNumObservation = max(labelCount{:, 2});
@@ -13,8 +14,9 @@ if isa(desiredNumObservation, 'string')
         otherwise
             disp("The balanceDatastore desiredNumObservation not valid, I will use the maximum number")
             desiredNumObservation = max(labelCount{:, 2});
+    end
 end
-labelCount = countEachLabel(datastore);   
+  
 maxNumObservations = max(labelCount{:, 2});
 [G,classes] = findgroups(datastore.Labels);
 filesAndLabels = splitapply(@(x,y){randReplicateData(x,y,maxNumObservations)},datastore.Files, datastore.Labels,G); 
