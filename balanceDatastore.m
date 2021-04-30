@@ -17,9 +17,8 @@ if (isa(desiredNumObservation, 'string'))
     end
 end
   
-maxNumObservations = max(labelCount{:, 2});
 [G,classes] = findgroups(datastore.Labels);
-filesAndLabels = splitapply(@(x,y){randReplicateData(x,y,maxNumObservations)},datastore.Files, datastore.Labels,G); 
+filesAndLabels = splitapply(@(x,y){randReplicateData(x,y,desiredNumObservation)},datastore.Files, datastore.Labels,G); 
 filesAndLabels = vertcat(filesAndLabels{:,1});
 %files = filesAndLabels(:,1);
 %labels = classes(filesAndLabels(:,2));
