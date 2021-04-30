@@ -5,7 +5,9 @@ clear;clc;close all
 pathDataset = 'MerchData'; % path of the folder containing the images to be learnt, subdivided into folders per class
 fileExtensions = {'.jpg'}; % image extensions to be accepted
 trainingPercentage = 0.75; % data percentage for training set
-balanceDataset = true; %true/false if your dataset is unbalanced you can balance it
+balanceDataset = true; % true/false if your dataset is unbalanced you can balance it
+trainDesiredNumObservation = "max" % max, min, mean, median, or you can specify a number. It is the number of samples per class that you want in the balanced dataSet
+validationDesiredNumObservation = "max"
 
 % DATA AUGMENTATION/TRANSFORMATION SETTINGS
 dataAugmentation = true; % true/false if you need to perform data augmentation or data transformation (rgb2gray, resize etc). If false, you can ignore next settings (DATA AUGMENTATION SETTINGS)
@@ -56,8 +58,8 @@ datastore = imageDatastore(pathDataset, 'FileExtensions', fileExtensions, 'Inclu
 %histogram(trainDatastore.Labels); title('Training set label frequency');
 %histogram(validationDatastore.Labels); title('Validation set label frequency');
 if balanceDataset
-    trainDatastore = balanceDatastore(trainDatastore);
-    validationDatastore = balanceDatastore(validationDatastore);
+    trainDatastore = balanceDatastore(trainDatastore, trainDesiredNumObservation);
+    validationDatastore = balanceDatastore(validationDatastore, validationDesiredNumObservation);
     %histogram(trainDatastore.Labels); title('Training set label frequency after data balancing');
     %histogram(validationDatastore.Labels); title('Validation set label frequency after data balancing');
 end

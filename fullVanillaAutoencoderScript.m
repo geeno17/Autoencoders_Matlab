@@ -7,6 +7,8 @@ pathDataset = 'MerchData'; % path of the folder containing the images to be lear
 fileExtensions = {'.png'}; % image extensions to be accepted
 trainingPercentage = 0.75; % data percentage for training set
 balanceDataset = true; %true/false if your dataset is unbalanced you can balance it.
+trainDesiredNumObservation = "max" % max, min, mean, median, or you can specify a number. It is the number of samples per class that you want in the balanced dataSet
+testDesiredNumObservation = "max"
 
 %DATA AUGMENTATION SETTINGS 
 dataAugmentation = false; % true/false if you need to perform data augmentation or data transformation (rgb2gray, resize etc). If false, you can ignore next settings (DATA AUGMENTATION SETTINGS)
@@ -51,8 +53,8 @@ datastore = imageDatastore(pathDataset, 'FileExtensions', fileExtensions, 'Inclu
 %histogram(trainDatastore.Labels); title('Training set label frequency');
 %histogram(testDatastore.Labels); title('Test set label frequency');
 if balanceDataset
-    trainDatastore = balanceDatastore(trainDatastore);
-    testDatastore = balanceDatastore(testDatastore);
+    trainDatastore = balanceDatastore(trainDatastore, trainDesiredNumObservation);
+    testDatastore = balanceDatastore(testDatastore, testDesiredNumObservation);
     
     %histogram(trainDatastore.Labels); title('Training set label frequency after data balancing');
     %histogram(testDatastore.Labels); title('Test set label frequency after data balancing');

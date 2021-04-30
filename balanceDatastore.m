@@ -1,5 +1,19 @@
 % Functions to balance the Dataset. It uses oversampling.
-function datastore = balanceDatastore(datastore)
+function datastore = balanceDatastore(datastore, desiredNumObservation)
+if isa(desiredNumObservation, 'string')
+    switch desiredNumObservation
+        case "max"
+            desiredNumObservation = max(labelCount{:, 2});
+        case "min"
+            desiredNumObservation = min(labelCount{:, 2});
+        case "mean"
+            desiredNumObservation = mean(labelCount{:, 2});
+        case "median"
+            desiredNumObservation = median(labelCount{:, 2});
+        otherwise
+            disp("The balanceDatastore desiredNumObservation not valid, I will use the maximum number")
+            desiredNumObservation = max(labelCount{:, 2});
+end
 labelCount = countEachLabel(datastore);   
 maxNumObservations = max(labelCount{:, 2});
 [G,classes] = findgroups(datastore.Labels);
